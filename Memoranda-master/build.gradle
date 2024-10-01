@@ -1,0 +1,91 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+import java.text.SimpleDateFormat
+
+plugins {
+    id "com.github.spotbugs" version "4.8.0"
+    id "checkstyle"
+}
+apply plugin: 'application'
+
+version = '1.0.0'
+SimpleDateFormat sdf = new SimpleDateFormat("MMM dd yyyy");
+String buildTime = sdf.format(new Date());
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+compileJava {
+    doFirst {
+        ant.replaceregexp(match: 'public static final String VERSION_INFO = ".*";',
+                replace: 'public static final String VERSION_INFO = "' + version + '";',
+                file: 'src/main/java/memoranda/ui/App.java')
+
+        ant.replaceregexp(match: 'public static final String BUILD_INFO = ".*";',
+                replace: 'public static final String BUILD_INFO = "' + buildTime + '";',
+                file: 'src/main/java/memoranda/ui/App.java')
+    }
+}
+
+///////////////////////////////////////////////////////
+mainClassName = 'main/java/memoranda/Start'
+
+
+// Repositories and dependencies for code go here
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  implementation group: 'org.json', name: 'json', version: '20200518'
+  implementation "junit:junit:4.12"
+  implementation 'com.io7m.xom:xom:1.2.+'
+  implementation 'net.sourceforge.nekohtml:nekohtml:1.9.+'
+    implementation 'xml-apis:xml-apis:1.0.b2'
+}
+
+///////////////////////////////////////////////////////////////////////
+// Configure Checkstyle
+/////////////////////////////////////////////////////////////////////
+apply plugin: 'checkstyle'
+ checkstyle {
+//   // Keep checkstyle a little quieter
+  ignoreFailures = true
+  showViolations = false
+ }
+
+tasks.withType(Checkstyle) {
+  
+  reports {
+    html.enabled = true
+    xml.enabled = false
+  }
+   include '**/*.java'
+  include '**/ui/App.java'
+ }
+
+
+checkstyle {
+    toolVersion = "8.8"
+}
+
+
+///////////////////////////////////////////////////////////////////////
+// Configure SpotBugs
+///////////////////////////////////////////////////////////////////////
+// To generate an HTML report instead of XML
+spotbugsMain {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+spotbugs {
+    toolVersion = '4.8.0'
+    ignoreFailures = true
+    showProgress = true
+    effort = 'max'
+}
